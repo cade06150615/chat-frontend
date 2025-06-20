@@ -1,82 +1,56 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>好友聊天室</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px;}
-  #chat { display: none; max-width: 600px; margin: auto; background: white; padding: 10px; border-radius: 5px;}
-  #messages { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 5px; }
-  #input-area { margin-top: 10px; }
-</style>
-</head>
-<body>
+let currentUser = null;
+const socket = new WebSocket('wss://chat-server-2-25a6.onrender.com'); // 改成你的後端 WS URL
 
-<div id="login">
-  <h2>登入聊天室</h2>
-  <input id="username" placeholder="輸入你的名字" />
-  <button id="loginBtn">登入</button>
-</div>
+socket.addEventListener('open', () => {
+  console.log('已連線到聊天伺服器');
+  addSystemMessage('連線成功！');
+});
 
-<div id="chat">
-  <h2>聊天室</h2>
-  <div id="messages"></div>
-  <div id="input-area">
-    <input id="msgInput" placeholder="輸入訊息..." />
-    <button id="sendBtn">發送</button>
-  </div>
-  <button id="logoutBtn">登出</button>
-</div>
+socket.addEventListener('message', (event) => {
+  const msg = JSON.parse(event.data);
+  displayMessage(msg);
+});
 
-<script>
-  let currentUser = '';
-
-  const loginDiv = document.getElementById('login');
-  const chatDiv = document.getElementById('chat');
-  const usernameInput = document.getElementById('username');
-  const loginBtn = document.getElementById('loginBtn');
-
-  const messagesDiv = document.getElementById('messages');
-  const msgInput = document.getElementById('msgInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-
-  loginBtn.onclick = () => {
-    const name = usernameInput.value.trim();
-    if (!name) {
-      alert('請輸入名字');
-      return;
-    }
-    currentUser = name;
-    loginDiv.style.display = 'none';
-    chatDiv.style.display = 'block';
-    addMessage('系統', `${currentUser} 加入了聊天室`);
-  };
-
-  sendBtn.onclick = () => {
-    const msg = msgInput.value.trim();
-    if (!msg) return;
-    addMessage(currentUser, msg);
-    msgInput.value = '';
-  };
-
-  logoutBtn.onclick = () => {
-    addMessage('系統', `${currentUser} 離開了聊天室`);
-    currentUser = '';
-    chatDiv.style.display = 'none';
-    loginDiv.style.display = 'block';
-    usernameInput.value = '';
-    messagesDiv.innerHTML = '';
-  };
-
-  function addMessage(user, text) {
-    const msgElem = document.createElement('div');
-    msgElem.textContent = `${user}: ${text}`;
-    messagesDiv.appendChild(msgElem);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+loginBtn.addEventListener('click', () => {
+  const username = usernameInput.value.trim();
+  if (!username) {
+    alert('請輸入使用者名稱');
+    return;
   }
-</script>
+  currentUser = { name: username };
+  authContainer.classList.add('hidden');
+  chatContainer.classList.remove('hidden');
+  usernameDisplay.textContent = username;
+  usernameDisplay.classList.remove('hidden');
+  logoutBtn.classList.remove('hidden');
+  addSystemMessage(`歡迎 ${username} 加入聊天室！`);
+});
 
-</body>
-</html>
+logoutBtn.addEventListener('click', () => {
+  currentUser = null;
+  authContainer.classList.remove('hidden');
+  chatContainer.classList.add('hidden');
+  usernameDisplay.textContent = '未登入';
+  usernameDisplay.classList.add('hidden');
+  logoutBtn.classList.add('hidden');
+  usernameInput.value = '';
+  messageContainer.innerHTML = '<div class="text-center text-gray-500 text-sm py-2">— 開始聊天 —</div>';
+});
+
+function sendMessage() {
+  const message = messageInput.value.trim();
+  if (!message || !currentUser) return;
+  const msgObj = {
+    user: currentUser.name,
+    text: message,
+    time: new Date().toISOString(),
+  };
+  socket.send(JSON.stringify(msgObj));
+  messageInput.value = '';
+  messageInput.focus();
+}
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') sendMessage();
+});
