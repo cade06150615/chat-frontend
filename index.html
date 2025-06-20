@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>好友聊天室</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px;}
+  #chat { display: none; max-width: 600px; margin: auto; background: white; padding: 10px; border-radius: 5px;}
+  #messages { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 5px; }
+  #input-area { margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h2>登入聊天室</h2>
+  <input id="username" placeholder="輸入你的名字" />
+  <button id="loginBtn">登入</button>
+</div>
+
+<div id="chat">
+  <h2>聊天室</h2>
+  <div id="messages"></div>
+  <div id="input-area">
+    <input id="msgInput" placeholder="輸入訊息..." />
+    <button id="sendBtn">發送</button>
+  </div>
+  <button id="logoutBtn">登出</button>
+</div>
+
+<script>
+  let currentUser = '';
+
+  const loginDiv = document.getElementById('login');
+  const chatDiv = document.getElementById('chat');
+  const usernameInput = document.getElementById('username');
+  const loginBtn = document.getElementById('loginBtn');
+
+  const messagesDiv = document.getElementById('messages');
+  const msgInput = document.getElementById('msgInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  loginBtn.onclick = () => {
+    const name = usernameInput.value.trim();
+    if (!name) {
+      alert('請輸入名字');
+      return;
+    }
+    currentUser = name;
+    loginDiv.style.display = 'none';
+    chatDiv.style.display = 'block';
+    addMessage('系統', `${currentUser} 加入了聊天室`);
+  };
+
+  sendBtn.onclick = () => {
+    const msg = msgInput.value.trim();
+    if (!msg) return;
+    addMessage(currentUser, msg);
+    msgInput.value = '';
+  };
+
+  logoutBtn.onclick = () => {
+    addMessage('系統', `${currentUser} 離開了聊天室`);
+    currentUser = '';
+    chatDiv.style.display = 'none';
+    loginDiv.style.display = 'block';
+    usernameInput.value = '';
+    messagesDiv.innerHTML = '';
+  };
+
+  function addMessage(user, text) {
+    const msgElem = document.createElement('div');
+    msgElem.textContent = `${user}: ${text}`;
+    messagesDiv.appendChild(msgElem);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
